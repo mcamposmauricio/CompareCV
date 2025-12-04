@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { FileText, Upload, X, Briefcase, AlertCircle, Info } from 'lucide-react';
+import { FileText, Upload, X, Briefcase, AlertCircle, Info, Beaker } from 'lucide-react';
 import { FileData } from '../types';
 
 interface InputSectionProps {
@@ -17,6 +17,154 @@ const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MIN_JD_LENGTH = 50;
 
+// --- TEST DATA ---
+const TEST_JD = `Título: Customer Success Manager – SaaS B2B (Pleno/Sênior)
+Responsabilidades:
+● Gerir carteira de clientes B2B de médio e grande porte em modelo de assinatura (SaaS).
+● Conduzir reuniões de onboarding, QBRs e planos de sucesso com foco em adoção, engajamento e expansão.
+● Mapear stakeholders, entender objetivos de negócio e conectar o uso do produto aos resultados do cliente.
+● Monitorar indicadores como churn, NRR, uso da plataforma e NPS, propondo planos de ação.
+● Trabalhar em parceria com times de Vendas, Produto e Suporte para garantir experiência consistente.
+● Produzir relatórios executivos com insights e recomendações estratégicas.
+
+Requisitos obrigatórios:
+● Experiência mínima de 3 anos em Customer Success, Account Management ou Pós-venda B2B.
+● Vivência com produto em modelo SaaS ou software B2B.
+● Habilidade de conduzir reuniões com decisores (gestores, diretores, C-level).
+● Boa capacidade analítica para interpretar dados de uso e indicadores de sucesso.
+● Comunicação clara, escrita e falada, com foco em negócios.
+
+Diferenciais:
+● Experiência em empresas de tecnologia em crescimento (startups/scale-ups).
+● Atuação prévia com ferramentas de CS (ex: Gainsight, HubSpot, CustomerX, Planhat ou similares).
+● Inglês avançado para calls com clientes internacionais.
+● Experiência com clientes de RH, financeiro ou operações.
+
+Outras informações relevantes:
+● Senioridade desejada: Pleno/Sênior
+● Faixa de experiência: 4 a 10 anos total, sendo pelo menos 3 em CS ou pós-venda B2B
+● Idiomas: Inglês desejável (mínimo intermediário), espanhol é plus
+● Tipo de empresa: SaaS B2B em crescimento, ticket recorrente
+● Tipo de carteira: 30–60 contas ativas, foco em retenção e expansão`;
+
+const TEST_RESUMES = [
+    {
+        name: "Beatriz Lima.pdf",
+        content: `Nome: Beatriz Lima
+Cargo atual: Analista de Dados de Produto
+Local: Belo Horizonte – MG
+Resumo profissional:
+Analista de dados com 5 anos de experiência em empresas SaaS, responsável por acompanhar métricas de uso, engajamento e retenção. Forte visão analítica e boa capacidade de comunicação com áreas de negócio.
+Experiência:
+Analista de Dados de Produto – SaaS de logística (2021 – atual)
+● Construção de painéis para monitorar churn, engajamento e NRR.
+● Apoio ao time de CS na definição de health score.
+● Análises de cohort e segmentação de clientes.
+Assistente de BI – consultoria de tecnologia (2019 – 2021)
+● Criação de relatórios gerenciais para diretoria.
+● Consolidação de dados em ferramentas de visualização.
+Formação:
+● Estatística – UFMG (2014 – 2018)
+Idiomas:
+● Inglês avançado
+Outros:
+● Domínio de SQL, Power BI e Looker
+● Não possui experiência direta como dona de carteira de clientes`
+    },
+    {
+        name: "João Pedro Carvalho.pdf",
+        content: `João Pedro Carvalho
+Rio de Janeiro – RJ
+35 anos
+Telefone: (21) 9 9999-9999
+E-mail: joaopcarvalho@exemplo.com
+LinkedIn: /in/joaop-atendimento
+Objetivo
+Continuar minha carreira na área de atendimento ao cliente e operação de contact center, podendo contribuir com gestão de times, metas de atendimento e melhorias em NPS.
+Resumo de experiência
+Trabalho há mais de 8 anos com atendimento ao cliente em larga escala, em especial B2C (telecom, varejo online). Tenho vivência forte em coordenação de equipes, acompanhamento de indicadores (TMA, fila, ocupação, absenteísmo, NPS, CSAT) e operação de canais (telefone, chat, e-mail, redes sociais). Pouca atuação com carteira de clientes B2B ou software em modelo SaaS.
+Histórico profissional
+2019 – atual: Coordenador de Atendimento – Grande E-commerce nacional
+● Coordenação direta de um time com cerca de 25 atendentes em regime de escala.
+● Acompanhamento de metas de TMA, abandono, produtividade por hora e qualidade de atendimento.
+● Treinamento de novos colaboradores em scripts, procedimentos e sistema interno.
+Antes disso:
+2015 – 2019: Supervisor de Call Center – Operadora de Telecom
+● Supervisão de operação receptiva e ativa.
+Formação acadêmica: Administração de Empresas – Estácio (2012 – 2016)
+Idiomas: Inglês: básico.`
+    },
+    {
+        name: "Lucas Ferreira.pdf",
+        content: `Nome: Lucas Ferreira
+Cargo atual: Customer Success Pleno
+Local: Curitiba – PR
+Resumo profissional:
+Profissional com 4 anos de experiência em atendimento B2B em empresas de tecnologia, atuando nos últimos 2 anos como Customer Success em SaaS voltado para pequenas e médias empresas.
+Experiência profissional:
+Customer Success Pleno – SaaS de Gestão Financeira (2022 – atual)
+● Gestão de carteira com ~80 clientes PMEs.
+● Responsável por onboarding, suporte consultivo e renovações.
+● Criação de materiais educativos, webinars e treinamentos para clientes.
+● Uso de HubSpot, RD Station e dashboards internos.
+Analista de Suporte Técnico – Software de automação comercial (2020 – 2022)
+● Atendimento N2 a clientes B2B.
+Formação:
+● Sistemas de Informação – Universidade Positivo (2016 – 2020)
+Idiomas:
+● Inglês intermediário (consumo de conteúdos e suporte pontual escrito)
+Outros:
+● Conhecimento em NPS, CSAT, churn, tickets e funil de adoção
+● Experiência em startups em fase de crescimento`
+    },
+    {
+        name: "Mariana Souza.pdf",
+        content: `Nome: Mariana Souza
+Cargo atual: Customer Success Manager Sênior
+Local: São Paulo – SP
+Resumo profissional:
+Profissional com 7 anos de experiência em relacionamento B2B, sendo os últimos 5 anos dedicados a Customer Success em empresas SaaS. Especialista em gestão de carteira, aumento de NRR e redução de churn. Forte atuação estratégica junto a gestores e diretores de RH e Operações.
+Experiência profissional:
+Customer Success Manager Sênior – HRTech SaaS (2021 – atual)
+● Gestão de carteira com ~45 clientes B2B (médio e grande porte).
+● Redução de churn de 8% para 3,5% em 2 anos.
+● Aumento de NRR médio de 103% para 115% através de expansão de módulos.
+● Condução de QBRs com C-level de RH, DP e Operações.
+● Uso intensivo de ferramentas como CustomerX, HubSpot e Power BI.
+Customer Success Pleno – SaaS de ERP (2019 – 2021)
+● Responsável por onboarding e adoção de novos clientes.
+● Estruturação de playbooks de jornada por segmento.
+Formação:
+● Administração de Empresas – FGV (2013 – 2017)
+Idiomas:
+● Inglês avançado (reuniões e negociações)
+● Espanhol intermediário
+Outros:
+● Certificação em Customer Success – CS Academy
+● Conhecimento em NPS, CSAT, churn, NRR e cohort analysis`
+    },
+    {
+        name: "Rafael Almeida.pdf",
+        content: `Rafael Almeida
+São Paulo – SP
+Sobre mim: Trabalho com implantação de sistemas há cerca de 6 anos. Minha atuação está muito conectada a projetos de entrada do cliente no produto (onboarding técnico), definição de escopo, configuração de plataforma e go-live.
+Experiência profissional:
+2017 – 2020: Analista de Implantação – ERP para indústria
+● Responsável por parametrizar módulos financeiros, estoque e produção.
+● Viagens frequentes para acompanhar projetos on-site.
+2020 – até o momento: Implementation Specialist – SaaS de Gestão de Projetos
+● Conduzir projetos de implantação de software para empresas B2B.
+● Coletar requisitos e alinhar escopo com stakeholders de negócio e TI.
+● Criar o ambiente do cliente, configurar usuários, permissões e integrações básicas.
+● Acompanhar o cliente até o go-live e então fazer a transição para o time de CS.
+Formação: Engenharia de Produção – Universidade Presbiteriana Mackenzie (2012 – 2017)
+Idiomas: Inglês: nível intermediário.
+Informações adicionais:
+● Foco é implantação e projeto, não gestão contínua de resultados de negócio.
+● Interesse em conhecer melhor áreas como Customer Success, mas experiência principal é técnico/projetos.`
+    }
+];
+
 export const InputSection: React.FC<InputSectionProps> = ({
   files,
   onFilesSelected,
@@ -27,6 +175,30 @@ export const InputSection: React.FC<InputSectionProps> = ({
   isLoading
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleTestFill = async () => {
+    // 1. Fill Job Description
+    onJobDescriptionChange(TEST_JD);
+
+    // 2. Create File Objects for Resumes
+    const filePromises = TEST_RESUMES.map(async (resume) => {
+        // We create a File object with type 'text/plain' so Gemini reads it easily,
+        // but name it .pdf so it looks correct in the UI list.
+        const file = new File([resume.content], resume.name, { type: 'text/plain' });
+        
+        return new Promise<FileData>((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const base64 = (reader.result as string).split(',')[1];
+                resolve({ file, base64 });
+            };
+        });
+    });
+
+    const newFiles = await Promise.all(filePromises);
+    onFilesSelected(newFiles);
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -83,14 +255,28 @@ export const InputSection: React.FC<InputSectionProps> = ({
   const isButtonDisabled = isLoading || !isValid;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 h-full flex flex-col gap-8">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 h-full flex flex-col gap-8 relative">
+      
+      {/* Test Button - Top Right */}
+      <div className="absolute top-4 right-4">
+          <button
+            onClick={handleTestFill}
+            disabled={isLoading || hasFiles}
+            title="Preencher com dados de exemplo (Teste)"
+            className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Beaker className="w-4 h-4" />
+            TESTE RÁPIDO
+          </button>
+      </div>
+
       <div>
         <div className="flex justify-between items-center mb-4">
              <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-blue-600" />
                 Descrição da Vaga
             </h2>
-            <div className="group relative">
+            <div className="group relative mr-24 md:mr-0"> {/* Margin right to avoid overlapping test button on mobile */}
                 <Info className="w-4 h-4 text-slate-400 cursor-help" />
                 <div className="absolute right-0 w-64 p-3 bg-slate-800 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 top-6">
                     Quanto mais detalhes sobre senioridade, ferramentas, idiomas e responsabilidades, mais precisa será a análise.
@@ -151,7 +337,9 @@ export const InputSection: React.FC<InputSectionProps> = ({
                     <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-lg text-sm group transition-colors hover:border-blue-200 hover:bg-blue-50/20">
                         <span className="truncate text-slate-700 font-medium max-w-[80%]" title={f.file.name}>{f.file.name}</span>
                         <div className="flex items-center gap-3">
-                             <span className="text-xs text-slate-400">{(f.file.size / 1024 / 1024).toFixed(1)} MB</span>
+                             <span className="text-xs text-slate-400">
+                                {f.file.size > 0 ? (f.file.size / 1024 / 1024).toFixed(1) : '< 0.1'} MB
+                             </span>
                             <button 
                                 onClick={() => onFileRemove(idx)}
                                 className="text-slate-400 hover:text-red-500 transition-colors"

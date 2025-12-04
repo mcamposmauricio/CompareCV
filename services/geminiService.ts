@@ -3,10 +3,8 @@ import { AnalysisResult, FileData } from "../types";
 
 const parseJSON = (text: string): any => {
     try {
-        // Attempt to parse strictly first
         return JSON.parse(text);
     } catch (e) {
-        // If strict parsing fails, try to clean markdown code blocks
         const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
         return JSON.parse(cleaned);
     }
@@ -18,49 +16,87 @@ export const analyzeResumes = async (
 ): Promise<AnalysisResult> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-  // Construct parts: 1 Text part for JD + N InlineData parts for PDFs
-  const parts = [
-    {
-      text: `Você é um Recrutador Sênior Especialista e um Assistente de RH Brasileiro.
-      
-      IDIOMA DE SAÍDA: PORTUGUÊS (PT-BR).
-      Todas as strings, feedbacks, motivos de erro, resumos, prós e contras DEVEM ser escritos em Português do Brasil.
-
-      CONTEXTO:
-      Estou fornecendo um texto que DEVE SER uma Descrição de Vaga (Job Description) e ${files.length} arquivos PDF que DEVEM SER currículos.
-      
-      TAREFA DE VALIDAÇÃO (CRÍTICA):
-      1. Verifique se o texto da "JOB DESCRIPTION" abaixo é realmente uma descrição de vaga válida e compreensível. Se for apenas caracteres aleatórios, muito curto, ou algo sem sentido (ex: receita de bolo, lorem ipsum, "teste"), marque "isJobDescriptionValid": false.
-         No campo "jobDescriptionFeedback", escreva em PORTUGUÊS por que é inválido (ex: "O texto fornecido não parece uma descrição de vaga válida.").
-      2. Para CADA arquivo PDF, verifique se é um currículo profissional (CV/Resume). Se for um documento não relacionado (ex: fatura, receita, texto aleatório, imagem sem texto), marque "isResume": false.
-         No campo "notResumeReason", escreva em PORTUGUÊS o motivo (ex: "O arquivo parece ser um boleto bancário e não um currículo.").
-
-      TAREFA DE ANÁLISE (Para itens válidos):
-      Se a JD for válida e o arquivo for um currículo:
-      1. Extraia o nome do candidato.
-      2. Avalie a "Adequação Técnica" (0 a 100).
-      3. Avalie a "Adequação de Potencial/Cultural" (0 a 100).
-      4. Liste pros/cons, resumo e anos de experiência.
-
-      JOB DESCRIPTION ENVIADA:
-      "${jobDescription}"
-      
-      INSTRUÇÕES DE SAÍDA:
-      Retorne APENAS um objeto JSON válido seguindo estritamente este schema.`
-    },
-    ...files.map((f) => ({
+  // Convert text/plain files to text parts to avoid 500 errors with inlineData for text
+  const fileParts = files.map((f) => {
+    if (f.file.type === 'text/plain') {
+        try {
+            const textContent = atob(f.base64);
+            return {
+                text: `\n=== CONTEÚDO DO ARQUIVO: ${f.file.name} ===\n${textContent}\n=== FIM DO ARQUIVO ===\n`
+            };
+        } catch (e) {
+            // Fallback if decode fails
+            return {
+                inlineData: {
+                    mimeType: f.file.type,
+                    data: f.base64,
+                },
+            };
+        }
+    }
+    
+    return {
       inlineData: {
         mimeType: f.file.type,
         data: f.base64,
       },
-    })),
-  ];
+    };
+  });
+
+  const promptPart = {
+      text: `Você é um Headhunter de Elite e Especialista em Psicologia Organizacional.
+      
+      IDIOMA DE SAÍDA: PORTUGUÊS (PT-BR).
+      
+      REGRA DE OURO (ANTI-ALUCINAÇÃO):
+      NUNCA invente informações. Se uma informação específica (como pretensão salarial, tempo médio, ou modelo de trabalho) não estiver explícita ou fortemente implícita no documento, o valor deve ser EXATAMENTE a string "Sem dados suficientes". Não tente adivinhar.
+
+      CONTEXTO:
+      Analise ${files.length} arquivos (candidatos) contra uma Descrição de Vaga (Job Description).
+      
+      TAREFA DE VALIDAÇÃO:
+      1. Valide a Job Description (isJobDescriptionValid).
+      2. Valide se cada arquivo é um currículo (isResume).
+
+      TAREFA DE ANÁLISE PROFUNDA (Para currículos válidos):
+      
+      1. **Informações Inferidas:**
+         - Calcule o tempo médio de permanência (Tenure). Se não houver datas, "Sem dados suficientes".
+         - Compare a senioridade que ele diz ter vs. a que ele aparenta ter.
+         - Identifique pretensão salarial e modelo de trabalho. Se não mencionado, use "Sem dados suficientes".
+      
+      2. **Soft Skills (0-100):**
+         Avalie: Comunicação, Organização, Autonomia, Capacidade Analítica, Colaboração, Aprendizado Rápido, Resolução de Problemas, Clareza na Escrita.
+         Se não houver evidências no texto para avaliar uma skill, coloque nota 0 e no reasoning coloque "Sem dados suficientes para avaliar".
+      
+      3. **Fit Cultural:**
+         Defina se o candidato é orientado a: Resultados, Processos, Pessoas ou Inovação. Dê uma nota de aderência cultural geral.
+      
+      4. **Red Flags (Riscos):**
+         Identifique Job Hopping (alta rotatividade), lacunas (gaps) não explicados, estagnação, regressão de cargo, ou falta de resultados quantitativos.
+      
+      5. **Gap Analysis:**
+         Mapeie skills Fortes, Medianas e Fracas/Inexistentes e o impacto disso na vaga (Baixo/Médio/Alto).
+      
+      6. **Perguntas de Entrevista:**
+         Crie perguntas Técnicas (para validar mentiras/profundidade), Comportamentais, Culturais e Logísticas.
+
+      7. **Recomendação Final:**
+         Escreva um parágrafo MUITO SUCINTO (máximo 5 linhas) justificando a escolha do melhor candidato. Seja direto.
+
+      JOB DESCRIPTION:
+      "${jobDescription}"
+      
+      SAÍDA ESPERADA: JSON estrito seguindo o schema.`
+  };
+
+  const parts = [promptPart, ...fileParts];
 
   const responseSchema: Schema = {
     type: Type.OBJECT,
     properties: {
-      isJobDescriptionValid: { type: Type.BOOLEAN, description: "True se a JD for válida." },
-      jobDescriptionFeedback: { type: Type.STRING, description: "Motivo em PT-BR se a JD for inválida." },
+      isJobDescriptionValid: { type: Type.BOOLEAN },
+      jobDescriptionFeedback: { type: Type.STRING },
       candidates: {
         type: Type.ARRAY,
         items: {
@@ -68,24 +104,101 @@ export const analyzeResumes = async (
           properties: {
             id: { type: Type.STRING },
             name: { type: Type.STRING },
-            isResume: { type: Type.BOOLEAN, description: "True se o arquivo for um currículo." },
-            notResumeReason: { type: Type.STRING, description: "Motivo em PT-BR se o arquivo não for currículo." },
-            matchScore: { type: Type.NUMBER, description: "Nota geral 0-100" },
-            technicalFit: { type: Type.NUMBER, description: "Eixo X nota 0-100" },
-            potentialFit: { type: Type.NUMBER, description: "Eixo Y nota 0-100" },
-            summary: { type: Type.STRING, description: "Resumo em PT-BR" },
+            isResume: { type: Type.BOOLEAN },
+            notResumeReason: { type: Type.STRING },
+            
+            // Core
+            matchScore: { type: Type.NUMBER },
+            technicalFit: { type: Type.NUMBER },
+            potentialFit: { type: Type.NUMBER },
+            summary: { type: Type.STRING },
+            yearsOfExperience: { type: Type.NUMBER },
             pros: { type: Type.ARRAY, items: { type: Type.STRING } },
             cons: { type: Type.ARRAY, items: { type: Type.STRING } },
-            yearsOfExperience: { type: Type.NUMBER },
+
+            // Inferred Info
+            inferredInfo: {
+                type: Type.OBJECT,
+                properties: {
+                    salaryExpectation: { type: Type.STRING, description: "Valor ou 'Sem dados suficientes'" },
+                    availability: { type: Type.STRING, description: "Ex: Imediata, ou 'Sem dados suficientes'" },
+                    workModel: { type: Type.STRING, description: "Remoto, Híbrido, Presencial ou 'Sem dados suficientes'" },
+                    perceivedSeniority: { type: Type.STRING },
+                    selfReportedSeniority: { type: Type.STRING },
+                    averageTenure: { type: Type.STRING, description: "Tempo médio ou 'Sem dados suficientes'" },
+                    languages: { 
+                        type: Type.ARRAY, 
+                        items: { 
+                            type: Type.OBJECT,
+                            properties: {
+                                language: { type: Type.STRING },
+                                proficiency: { type: Type.STRING },
+                                justification: { type: Type.STRING }
+                            }
+                        } 
+                    },
+                    keyTools: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    certifications: { type: Type.ARRAY, items: { type: Type.STRING } }
+                }
+            },
+
+            // Soft Skills
+            softSkills: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        skill: { type: Type.STRING },
+                        score: { type: Type.NUMBER },
+                        reasoning: { type: Type.STRING }
+                    }
+                }
+            },
+
+            // Cultural Fit
+            culturalFit: {
+                type: Type.OBJECT,
+                properties: {
+                    score: { type: Type.NUMBER },
+                    reasoning: { type: Type.STRING },
+                    orientation: { type: Type.STRING, enum: ['Resultados', 'Processos', 'Pessoas', 'Inovação'] }
+                }
+            },
+
+            // Red Flags
+            redFlags: { type: Type.ARRAY, items: { type: Type.STRING } },
+
+            // Gap Analysis
+            gapAnalysis: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        skillName: { type: Type.STRING },
+                        type: { type: Type.STRING, enum: ['Strong', 'Medium', 'Weak'] },
+                        impact: { type: Type.STRING, enum: ['Baixo', 'Médio', 'Alto'] }
+                    }
+                }
+            },
+
+            // Interview Questions
+            interviewQuestions: {
+                type: Type.OBJECT,
+                properties: {
+                    technical: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    behavioral: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    cultural: { type: Type.ARRAY, items: { type: Type.STRING } },
+                    logistical: { type: Type.ARRAY, items: { type: Type.STRING } }
+                }
+            }
           },
-          required: ["name", "isResume", "matchScore", "technicalFit", "potentialFit", "summary", "pros", "cons"],
+          required: ["name", "isResume", "matchScore", "inferredInfo", "softSkills", "culturalFit", "redFlags", "gapAnalysis", "interviewQuestions"]
         },
       },
-      marketSummary: { type: Type.STRING, description: "Resumo de mercado comparando os candidatos VÁLIDOS em PT-BR." },
-      recommendation: { type: Type.STRING, description: "Recomendação final sobre quem entrevistar em PT-BR." },
+      recommendation: { type: Type.STRING },
       bestCandidateId: { type: Type.STRING },
     },
-    required: ["candidates", "marketSummary", "recommendation", "isJobDescriptionValid"],
+    required: ["candidates", "recommendation", "isJobDescriptionValid"],
   };
 
   try {
@@ -98,7 +211,7 @@ export const analyzeResumes = async (
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.2,
+        temperature: 0.1, // Lower temp for more analytical/strict output
       },
     });
 
