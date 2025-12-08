@@ -63,15 +63,30 @@ export interface Candidate {
   cons: string[]; // Legacy but useful
 }
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+}
+
 export interface AnalysisResult {
   isJobDescriptionValid: boolean;
   jobDescriptionFeedback?: string;
   candidates: Candidate[];
   recommendation: string;
   bestCandidateId: string;
+  tokenUsage?: TokenUsage;
 }
 
 export interface FileData {
   file: File;
   base64: string;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  password?: string;
 }

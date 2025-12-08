@@ -217,8 +217,17 @@ export const analyzeResumes = async (
 
     const text = response.text;
     if (!text) throw new Error("No response from AI");
+    
+    const parsedData = parseJSON(text);
 
-    return parseJSON(text);
+    return {
+        ...parsedData,
+        tokenUsage: {
+            inputTokens: response.usageMetadata?.promptTokenCount || 0,
+            outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
+            totalTokens: response.usageMetadata?.totalTokenCount || 0
+        }
+    };
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     throw error;
