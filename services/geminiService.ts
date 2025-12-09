@@ -78,10 +78,7 @@ export const analyzeResumes = async (
       5. **Gap Analysis:**
          Mapeie skills Fortes, Medianas e Fracas/Inexistentes e o impacto disso na vaga (Baixo/Médio/Alto).
       
-      6. **Perguntas de Entrevista:**
-         Crie perguntas Técnicas (para validar mentiras/profundidade), Comportamentais, Culturais e Logísticas.
-
-      7. **Recomendação Final:**
+      6. **Recomendação Final:**
          Escreva um parágrafo MUITO SUCINTO (máximo 5 linhas) justificando a escolha do melhor candidato. Seja direto.
 
       JOB DESCRIPTION:
@@ -179,20 +176,9 @@ export const analyzeResumes = async (
                         impact: { type: Type.STRING, enum: ['Baixo', 'Médio', 'Alto'] }
                     }
                 }
-            },
-
-            // Interview Questions
-            interviewQuestions: {
-                type: Type.OBJECT,
-                properties: {
-                    technical: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    behavioral: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    cultural: { type: Type.ARRAY, items: { type: Type.STRING } },
-                    logistical: { type: Type.ARRAY, items: { type: Type.STRING } }
-                }
             }
           },
-          required: ["name", "isResume", "matchScore", "inferredInfo", "softSkills", "culturalFit", "redFlags", "gapAnalysis", "interviewQuestions"]
+          required: ["name", "isResume", "matchScore", "inferredInfo", "softSkills", "culturalFit", "redFlags", "gapAnalysis"]
         },
       },
       recommendation: { type: Type.STRING },

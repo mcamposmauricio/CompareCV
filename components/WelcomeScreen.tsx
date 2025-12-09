@@ -1,14 +1,11 @@
 import React from 'react';
-import { Upload, UserCheck, FileText, CheckCircle2 } from 'lucide-react';
-import { AuthForm } from './AuthForm';
-import { User } from '../types';
+import { Upload, UserCheck, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface WelcomeScreenProps {
   onStart: () => void;
-  onLoginSuccess: (user: User) => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLoginSuccess }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
   return (
     <div className="flex flex-col lg:flex-row items-center justify-center min-h-[80vh] gap-12 lg:gap-24 px-4 py-8">
       
@@ -61,9 +58,31 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onLoginSuccess }) 
         </div>
       </div>
 
-      {/* Right Column: Auth Form */}
+      {/* Right Column: Start Action */}
       <div className="w-full max-w-md flex justify-center lg:justify-end">
-          <AuthForm onSuccess={onLoginSuccess} />
+          <div className="bg-white rounded-2xl shadow-xl shadow-blue-100 border border-slate-200 p-8 w-full">
+            <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-700">
+                    <UserCheck className="w-8 h-8" />
+                </div>
+                <h2 className="text-2xl font-bold text-blue-950 mb-2">Pronto para começar?</h2>
+                <p className="text-slate-500">
+                    Não requer cadastro. A análise é feita instantaneamente.
+                </p>
+            </div>
+
+            <button
+                onClick={onStart}
+                className="w-full py-4 bg-blue-700 text-white rounded-xl font-bold hover:bg-blue-800 transition-all shadow-lg shadow-blue-100 hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
+            >
+                Começar Análise Agora
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+            
+            <p className="text-xs text-slate-400 text-center mt-4">
+                Seus dados são processados de forma segura e anônima.
+            </p>
+          </div>
       </div>
     </div>
   );

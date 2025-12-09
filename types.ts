@@ -16,13 +16,6 @@ export interface SkillGap {
   impact: 'Baixo' | 'Médio' | 'Alto';
 }
 
-export interface InterviewQuestions {
-  technical: string[];
-  behavioral: string[];
-  cultural: string[];
-  logistical: string[];
-}
-
 export interface InferredInfo {
   salaryExpectation: string; // "Sem dados suficientes" or value
   availability: string;
@@ -56,7 +49,7 @@ export interface Candidate {
   culturalFit: CulturalFit;
   redFlags: string[];
   gapAnalysis: SkillGap[];
-  interviewQuestions: InterviewQuestions;
+  // interviewQuestions removed per request
   
   // Comparison
   pros: string[]; // Legacy but useful
@@ -81,12 +74,4 @@ export interface AnalysisResult {
 export interface FileData {
   file: File;
   base64: string;
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  company?: string;
-  password?: string;
 }

@@ -34,7 +34,8 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export const NineBoxChart: React.FC<NineBoxChartProps> = ({ candidates }) => {
   
-  const validCandidates = candidates.filter(c => c.isResume);
+  // Explicitly filter for candidates with >= 50 match score to avoid pollution, even if parent filters too.
+  const validCandidates = candidates.filter(c => c.isResume && c.matchScore >= 50);
 
   const getColor = (score: number) => {
       if (score >= 85) return '#10b981'; 
